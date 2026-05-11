@@ -13,11 +13,23 @@ jobs:
       PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Validate required secrets
+        run: |
+          test -n "$SUPABASE_ACCESS_TOKEN" || (echo "Missing secret: SUPABASE_ACCESS_TOKEN" && exit 1)
+          test -n "$SUPABASE_DB_PASSWORD" || (echo "Missing secret: SUPABASE_DB_PASSWORD" && exit 1)
+          test -n "$PROJECT_ID" || (echo "Missing secret: SUPABASE_PROJECT_ID" && exit 1)
+
+      - uses: actions/checkout@v4
 
       - uses: supabase/setup-cli@v1
         with:
           version: latest
 
-      - run: supabase link --project-ref $PROJECT_ID
-      - run: supabase db push --include-all
+      - name: Login to Supabase
+        run: supabase login --token "$SUPABASE_ACCESS_TOKEN"
+
+      - name: Link Supabase project
+        run: supabase link --project-ref "$PROJECT_ID"
+
+      - name: Push database migrations
+        run: supabase db push --include-all
