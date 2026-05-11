@@ -1,0 +1,68 @@
+ClassroomIO Deployment Handoff
+Last updated: 2026-05-12
+
+Repository:
+
+  https://github.com/s1161858/classroomio
+
+Current deployment strategy:
+
+  - Supabase Free for database/auth/storage
+  - Vercel Hobby/Free for apps/dashboard
+  - Render Free later for apps/api, only if API-dependent features are needed
+  - WordPress remains an entry point/menu link only
+
+Completed:
+
+  - Project identified as SvelteKit + Supabase + Node API monorepo, not a WordPress plugin/theme.
+  - WordPress site confirmed: https://beta.5gnumultimedia.com
+  - No cPanel/SSH/Node.js App access confirmed from WordPress admin.
+  - GitHub repository created and project pushed to main.
+  - Real .env files and node_modules were not committed.
+  - Docker publish workflow push trigger disabled.
+  - Supabase automatic push workflows disabled.
+  - Manual Supabase deploy workflow added/updated to use GitHub Actions Secrets.
+  - User confirmed Deploy Supabase Manually completed successfully on 2026-05-12.
+
+Important commits:
+
+  - 49b7be1 Initial ClassroomIO project
+  - c6ef763 Disable automatic publish workflows
+  - 40dd578 Use secrets for manual Supabase deploy
+  - 64ebe35 Validate Supabase deploy secrets
+
+Supabase GitHub Actions Secrets used:
+
+  - SUPABASE_ACCESS_TOKEN
+  - SUPABASE_DB_PASSWORD
+  - SUPABASE_PROJECT_ID
+
+Next step:
+
+  Deploy apps/dashboard to Vercel.
+
+Vercel environment variables needed:
+
+  PUBLIC_SUPABASE_URL=<Supabase Project URL>
+  PUBLIC_SUPABASE_ANON_KEY=<Supabase anon public key>
+  PRIVATE_SUPABASE_SERVICE_ROLE=<Supabase service_role secret key>
+  PUBLIC_IS_SELFHOSTED=false
+  PRIVATE_APP_HOST=5gnumultimedia.com
+  PRIVATE_APP_SUBDOMAINS=app
+  PUBLIC_SERVER_URL=
+
+Security:
+
+  - Do not paste PRIVATE_SUPABASE_SERVICE_ROLE, database password, Supabase access token, or any API secret into chat.
+  - Store secrets only in GitHub/Vercel/Supabase secret or environment variable settings.
+
+Vercel setup notes:
+
+  - Import repository: s1161858/classroomio
+  - Framework preset: SvelteKit if detected
+  - Build command should be run from repo root:
+      pnpm build --filter @cio/dashboard
+  - Install command:
+      pnpm install --frozen-lockfile
+  - Output handled by SvelteKit adapter-vercel when PUBLIC_IS_SELFHOSTED=false
+
