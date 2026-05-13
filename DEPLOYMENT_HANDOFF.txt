@@ -54,7 +54,7 @@ Vercel environment variables needed:
 
 Confirmed Vercel env handling:
 
-  - PUBLIC_SINGLE_ORG_SITE_NAME must exist. Empty or placeholder value is acceptable for multi-tenant mode.
+  - PUBLIC_SINGLE_ORG_SITE_NAME should be empty or unset for multi-tenant mode. Do not use placeholder.
   - PUBLIC_IS_SELFHOSTED must be false for Vercel.
   - PUBLIC_SUPABASE_URL must be the full Supabase Project URL.
   - PUBLIC_SERVER_URL can temporarily be https://placeholder.example.com until apps/api is deployed.
@@ -151,7 +151,7 @@ Vercel setup notes:
     PUBLIC_SUPABASE_ANON_KEY=<copy exact anon public key from Supabase Dashboard>
     PRIVATE_SUPABASE_SERVICE_ROLE=<copy exact service_role key from Supabase Dashboard>
     PUBLIC_IS_SELFHOSTED=false
-    PUBLIC_SINGLE_ORG_SITE_NAME=<can be empty or placeholder, but variable must exist>
+    PUBLIC_SINGLE_ORG_SITE_NAME=<leave empty or unset for multi-tenant mode; do not use placeholder>
     PRIVATE_APP_HOST=5gnumultimedia.com
     PRIVATE_APP_SUBDOMAINS=app
     PUBLIC_SERVER_URL=https://placeholder.example.com
@@ -160,3 +160,29 @@ Vercel setup notes:
 
     In Vercel, update env vars for Production, Preview, and Development if offered, then redeploy without
     build cache. Do not paste service_role or any secret into chat.
+
+2026-05-13 redirect loop debugging:
+
+  Symptom:
+
+    Browser shows ERR_TOO_MANY_REDIRECTS on the Vercel deployment.
+
+  Findings:
+
+    - PUBLIC_SINGLE_ORG_SITE_NAME enables single-org mode when it has any non-empty value.
+    - A value such as placeholder, false, 0, none, null, or undefined should not enable single-org mode.
+    - If placeholder was configured in Vercel, the app tried to load an organization named "placeholder",
+      redirected to /404?type=org_missing, then the root layout repeated the same redirect on /404.
+
+  Code fix applied:
+
+    - apps/dashboard/src/lib/utils/config/singleOrg.ts now treats placeholder/false/0/none/null/undefined
+      as disabled single-org mode.
+    - apps/dashboard/src/routes/+layout.server.ts no longer repeatedly redirects from /404 when a configured
+      single-org siteName is missing.
+
+  Required Vercel fix:
+
+    - Remove PUBLIC_SINGLE_ORG_SITE_NAME or set it to an empty value for this deployment.
+    - Redeploy after changing the environment variable.
+    - Clear cookies for the Vercel deployment domain or test in an incognito window.

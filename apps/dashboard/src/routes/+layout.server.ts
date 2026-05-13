@@ -51,7 +51,9 @@ export const load = async ({ url, cookies, request }): Promise<LoadOutput> => {
     } else if (!dev) {
       // Org configured but not found in DB — this is a deployment error
       console.error(`Single-org mode: organization with siteName "${siteName}" not found in database`);
-      throw redirect(307, '/404?type=org_missing');
+      if (url.pathname !== '/404') {
+        throw redirect(307, '/404?type=org_missing');
+      }
     }
     return response;
   }
