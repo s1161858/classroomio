@@ -14,7 +14,7 @@ const config = {
   preprocess: [vitePreprocess({})],
 
   kit: {
-    adapter: useNodeAdapter ? adapterNode() : adapterVercel(),
+    adapter: useNodeAdapter ? adapterNode() : adapterVercel({ runtime: 'nodejs20.x' }),
     alias: {
       $lib: path.resolve('./src/lib'),
       $mail: path.resolve('./src/mail')

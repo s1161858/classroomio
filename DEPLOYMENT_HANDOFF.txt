@@ -90,7 +90,7 @@ Next browser steps:
     Root Directory: apps/dashboard
     Framework Preset: SvelteKit
     Install Command: cd ../.. && pnpm install --frozen-lockfile
-    Build Command: cd ../.. && pnpm build --filter @cio/dashboard
+    Build Command: cd ../.. && pnpm --filter @cio/dashboard build
     Output Directory: leave empty
 
   After changing settings:
@@ -114,7 +114,49 @@ Vercel setup notes:
   - Import repository: s1161858/classroomio
   - Framework preset: SvelteKit if detected
   - Build command should be run from repo root:
-      pnpm build --filter @cio/dashboard
+      pnpm --filter @cio/dashboard build
   - Install command:
       pnpm install --frozen-lockfile
   - Output handled by SvelteKit adapter-vercel when PUBLIC_IS_SELFHOSTED=false
+
+2026-05-13 Supabase/API key debugging:
+
+  Findings:
+
+    - classroomio-main and classroomio-main1 have the same API Supabase initializer.
+    - The local .env files still point to http://localhost:54321 with local supabase-demo keys.
+    - Those local keys will be rejected by the cloud project https://hqgygleangptqthjehtb.supabase.co.
+    - If Vercel is still showing "Invalid API key", the most likely cause is that Vercel has the wrong
+      PUBLIC_SUPABASE_ANON_KEY or PRIVATE_SUPABASE_SERVICE_ROLE, or it is still using an old deployment.
+
+  Code hardening applied:
+
+    - apps/dashboard/src/lib/config.ts now fails clearly in production if Supabase public env vars are
+      missing, placeholder values, or localhost.
+    - apps/dashboard/src/lib/utils/functions/supabase.server.ts now fails clearly if
+      PRIVATE_SUPABASE_SERVICE_ROLE is missing.
+    - apps/dashboard/svelte.config.js now sets adapter-vercel runtime to nodejs20.x explicitly.
+
+  Local verification:
+
+    - Dashboard Vite/SvelteKit compilation reached adapter-vercel output generation.
+    - Local build then failed only on Windows symlink permissions:
+        EPERM: operation not permitted, symlink ... .vercel/output/functions...
+    - This is a Windows local filesystem permission issue, not a Supabase key issue and not a Vercel Linux
+      build issue.
+
+  Required Vercel env values:
+
+    PUBLIC_SUPABASE_URL=https://hqgygleangptqthjehtb.supabase.co
+    PUBLIC_SUPABASE_ANON_KEY=<copy exact anon public key from Supabase Dashboard>
+    PRIVATE_SUPABASE_SERVICE_ROLE=<copy exact service_role key from Supabase Dashboard>
+    PUBLIC_IS_SELFHOSTED=false
+    PUBLIC_SINGLE_ORG_SITE_NAME=<can be empty or placeholder, but variable must exist>
+    PRIVATE_APP_HOST=5gnumultimedia.com
+    PRIVATE_APP_SUBDOMAINS=app
+    PUBLIC_SERVER_URL=https://placeholder.example.com
+
+  Required next action:
+
+    In Vercel, update env vars for Production, Preview, and Development if offered, then redeploy without
+    build cache. Do not paste service_role or any secret into chat.
