@@ -186,3 +186,77 @@ Vercel setup notes:
     - Remove PUBLIC_SINGLE_ORG_SITE_NAME or set it to an empty value for this deployment.
     - Redeploy after changing the environment variable.
     - Clear cookies for the Vercel deployment domain or test in an incognito window.
+
+2026-05-13 latest live status:
+
+  Current deployment status:
+
+    - Vercel deployment is now loading the app successfully.
+    - Previous ERR_TOO_MANY_REDIRECTS issue was resolved by commit:
+        8c94eef Disable placeholder single-org mode
+    - User reached the login screen.
+    - Login with an unknown account shows:
+        Invalid login credentials
+      This means the app is talking to Supabase Auth successfully; the account just does not exist
+      or the password is wrong.
+    - User tried registering a new account and Supabase returned:
+        email rate limit exceeded
+      This is Supabase default email sending rate limit, not an app deployment failure.
+
+  Recommended immediate login workaround:
+
+    - In Supabase Dashboard -> Authentication -> Users, create a user manually.
+    - Use Add user.
+    - Set email and password.
+    - If available, enable Auto Confirm User / Email Confirm.
+    - Then log in from the Vercel app.
+
+  Later production email fix:
+
+    - Configure custom SMTP in Supabase:
+        Supabase -> Authentication -> Settings -> SMTP
+    - Use a real email provider such as Resend, SendGrid, Mailgun, Gmail SMTP, or domain email SMTP.
+    - Default Supabase auth emails can rate-limit quickly during repeated testing.
+
+  Important environment variable note:
+
+    - PUBLIC_SINGLE_ORG_SITE_NAME should remain empty or unset for the current multi-tenant deployment.
+    - Do not set it to placeholder.
+    - If it is set to a real organization siteName later, that organization must exist in Supabase.
+
+  Remaining primary objective:
+
+    Deploy the working Vercel app to:
+      https://app.5gnumultimedia.com
+
+  Next steps for app.5gnumultimedia.com:
+
+    1. In Vercel project classroomio, go to:
+         Settings -> Domains
+    2. Add domain:
+         app.5gnumultimedia.com
+    3. Vercel will show required DNS record, usually:
+         Type: CNAME
+         Name: app
+         Value: cname.vercel-dns.com
+    4. In the DNS manager for 5gnumultimedia.com / cPanel Zone Editor, add or update the CNAME record.
+    5. Wait for DNS verification in Vercel.
+    6. After Vercel marks the domain valid, open:
+         https://app.5gnumultimedia.com
+    7. In Supabase, update Auth URL settings:
+         Authentication -> URL Configuration
+       Set Site URL:
+         https://app.5gnumultimedia.com
+       Add Redirect URLs:
+         https://app.5gnumultimedia.com
+         https://app.5gnumultimedia.com/**
+       Keep the current Vercel preview/production URL in Redirect URLs as a backup if desired.
+    8. In WordPress, add or update menu link:
+         My Learning -> https://app.5gnumultimedia.com
+
+  If app.5gnumultimedia.com fails:
+
+    - If Vercel says Invalid Configuration, check DNS record.
+    - If browser shows old website or cPanel default page, DNS is not pointing to Vercel yet.
+    - If SSL certificate is pending, wait until Vercel finishes certificate provisioning.
+    - If login redirect fails only on custom domain, recheck Supabase Auth Site URL and Redirect URLs.
